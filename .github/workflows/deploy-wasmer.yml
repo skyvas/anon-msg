@@ -1,0 +1,56 @@
+name: Deploy to Wasmer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Deployment Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    name: Build & Deploy to Wasmer Edge
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Install Wasmer CLI
+        run: |
+          curl https://get.wasmer.io -sSfL | sh
+          echo "$HOME/.wasmer/bin" >> $GITHUB_PATH
+
+      - name: Verify Wasmer CLI Installation
+        run: wasmer --version
+
+      - name: Deploy to Wasmer Edge
+        env:
+          WASMER_TOKEN: ${{ secrets.WASMER_TOKEN }}
+        run: |
+          if [ -z "$WASMER_TOKEN" ]; then
+            echo "Error: WASMER_TOKEN is not configured in GitHub repository secrets."
+            echo "Please navigate to Repository Settings > Secrets and variables > Actions, and add WASMER_TOKEN."
+            exit 1
+          fi
+          wasmer deploy --token="$WASMER_TOKEN" --non-interactive
