@@ -1,0 +1,19 @@
+[package]
+name = "akash-mac/anon-msg"
+version = "1.0.0"
+description = "Anonymous and signed messaging web application backed by PostgreSQL"
+license = "MIT"
+
+[dependencies]
+
+[[services]]
+name = "web"
+image = "."
+ports = [
+  { port = 3001, default = true }
+]
+
+[env]
+NODE_ENV = "production"
+PORT = "3001"
+# DATABASE_URL is injected via Wasmer App Secret or Wasmer Database Volume
