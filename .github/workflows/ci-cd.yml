@@ -1,0 +1,105 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build & Run Automated Test Suites
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: anon_msg
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend production bundle
+        run: npm run build
+
+      - name: Start backend server daemon
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          DATABASE_URL: postgres://postgres:password@localhost:5432/anon_msg
+          JWT_SECRET: ci-test-jwt-secret-key-2026
+        run: |
+          node server/index.js &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          
+          # Wait for PostgreSQL server health endpoint
+          for i in {1..30}; do
+            if curl -s http://localhost:3001/api/health | grep -q "healthy"; then
+              echo "Server is healthy and ready for testing."
+              break
+            fi
+            echo "Waiting for server to become healthy... ($i/30)"
+            sleep 1
+          done
+
+      - name: Run API contract tests
+        run: npm run test:api
+
+      - name: Run security penetration audit
+        run: npm run test:security
+
+      - name: Stop backend server daemon
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill $SERVER_PID 2>/dev/null || true
+          fi
+
+  deploy:
+    name: Deploy to Wasmer Edge
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Wasmer CLI
+        run: |
+          curl https://get.wasmer.io -sSfL | sh
+          echo "$HOME/.wasmer/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Wasmer
+        env:
+          WASMER_TOKEN: ${{ secrets.WASMER_TOKEN }}
+        run: |
+          if [ -z "$WASMER_TOKEN" ]; then
+            echo "WASMER_TOKEN secret is not set. Please add WASMER_TOKEN in GitHub repository secrets to enable automatic edge deployment."
+            exit 1
+          fi
+          wasmer deploy --token="$WASMER_TOKEN" --non-interactive
