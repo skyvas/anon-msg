@@ -1,19 +1,23 @@
 [package]
-name = "akash-mac/anon-msg"
+name = "anon-msg"
 version = "1.0.0"
-description = "Anonymous and signed messaging web application backed by PostgreSQL"
+description = "AnonMsg - Anonymous & Transparent Social Messaging Platform"
 license = "MIT"
+entrypoint = "web"
 
 [dependencies]
+"wasmer/python" = "^3.12"
 
-[[services]]
+[fs]
+"/dist" = "dist"
+"/main.py" = "main.py"
+
+[[command]]
 name = "web"
-image = "."
-ports = [
-  { port = 3001, default = true }
-]
+module = "wasmer/python:python"
+runner = "https://webc.org/runner/wasi"
 
-[env]
-NODE_ENV = "production"
-PORT = "3001"
-# DATABASE_URL is injected via Wasmer App Secret or Wasmer Database Volume
+[command.annotations.wasi]
+atom = "wasmer/python:python"
+main-args = ["main.py"]
+env = ["PYTHONUNBUFFERED=1", "PORT=8000", "HOST=0.0.0.0"]

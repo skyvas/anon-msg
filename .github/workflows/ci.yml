@@ -72,6 +72,9 @@ jobs:
       - name: Run security penetration audit
         run: npm run test:security
 
+      - name: Run Wasmer Edge runtime tests
+        run: npm run test:wasmer
+
       - name: Stop backend server daemon
         if: always()
         run: |

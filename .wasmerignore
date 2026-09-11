@@ -1,0 +1,17 @@
+node_modules/
+.venv/
+venv/
+.git/
+.github/
+.pytest_cache/
+tests/
+server/tests/
+__pycache__/
+*.pyc
+.DS_Store
+docs/
+.agents/
+.playwright-mcp/
+.tempmediaStorage/
+.system_generated/
+*.log

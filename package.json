@@ -9,9 +9,10 @@
     "dev:client": "vite",
     "build": "vite build",
     "start": "node server/index.js",
-    "test": "npm run test:api && npm run test:security",
+    "test": "npm run test:api && npm run test:security && npm run test:wasmer",
     "test:api": "node server/tests/api.test.js",
-    "test:security": "node server/tests/security.test.js"
+    "test:security": "node server/tests/security.test.js",
+    "test:wasmer": "python3 tests/test_wasmer_edge.py"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
