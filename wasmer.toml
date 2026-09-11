@@ -11,6 +11,7 @@ entrypoint = "web"
 [fs]
 "/dist" = "dist"
 "/main.py" = "main.py"
+"/requirements.txt" = "requirements.txt"
 
 [[command]]
 name = "web"
