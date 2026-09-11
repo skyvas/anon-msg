@@ -87,12 +87,12 @@ npm run test:security
 
 ---
 
-## CI/CD Pipeline
+## Continuous Integration (CI) Pipeline
 
-The project includes a GitHub Actions pipeline located at `.github/workflows/ci-cd.yml`:
+The project includes an automated GitHub Actions testing pipeline located at `.github/workflows/ci.yml`:
 
-- **Pull Request Trigger**: Spins up an ephemeral PostgreSQL 15 service container, installs dependencies, builds the production client, and runs both automated test suites (`test:api` and `test:security`).
-- **Main Branch Push / Deployment**: Upon merge into `main`, triggers automated deployment to the Wasmer edge platform using `wasmer deploy`.
+- **Pull Requests and Main Branch**: Automatically spins up an ephemeral PostgreSQL 15 service container, installs dependencies, builds the production client, and runs all test suites (`npm run test:api`, `npm run test:security`, and `npm run test:wasmer`).
+- **Wasmer Edge Deployment**: Handled automatically by Wasmer pulling directly from the `main` branch origin upon commit, packaging `wasmer.toml`, `main.py`, and `dist/`.
 
 ---
 
